@@ -35,12 +35,7 @@ set fish_function_path[1] $OMF_PATH/lib
 # Autoload util functions
 autoload $OMF_PATH/lib/git
 
-for path in {$OMF_PATH,$OMF_CONFIG}/pkg/*
-  set -l name (basename $path)
-
-  contains -- $name $OMF_IGNORE; and continue
-  require $name
-end
+require (basename {$OMF_PATH,$OMF_CONFIG}/pkg/*)
 
 # Autoload theme
 autoload {$OMF_PATH,$OMF_CONFIG}/themes/(cat $OMF_CONFIG/theme)
