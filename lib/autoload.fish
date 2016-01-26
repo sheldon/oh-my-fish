@@ -34,24 +34,36 @@ function autoload -d "Manipulate autoloading path components"
   end
 
   for path in $paths
-    not test -d "$path"; and continue
-
-    set -l dest fish_function_path
+    not test -d "$path"
+      and continue
 
     if test (basename "$path") = completions
-      set dest fish_complete_path
+      set dest completions
+      set fish_path fish_complete_path
+    else
+      set dest functions
+      set fish_path fish_function_path
     end
 
-    if set -q erase
-      if set -l index (contains -i -- $path $$dest)
-        set -e {$dest}[$index]
-        set return_success
-      end
+    if set -l index (contains -i -- "$path" $$fish_path)
+      set -q erase; and set $dest $index $$dest
     else
-      set return_success
-      contains -- "$path" $$dest; and continue
-      set $dest "$path" $$dest
+      set -q erase; or  set $dest $path $$dest
     end
+  end
+
+  if set -q erase
+    test -n "$completions"
+      and set -e fish_complete_path[$completions]
+    test -n "$functions"
+      and set -e fish_function_path[$functions]
+    set return_success
+  else
+    test -n "$completions"
+      and set fish_complete_path $completions $fish_complete_path
+    test -n "$functions"
+      and set fish_function_path $functions $fish_function_path
+    set return_success
   end
 
   set -q return_success
