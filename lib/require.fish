@@ -10,28 +10,37 @@
 #
 #   If the required plugin has already been loaded, does nothing.
 
-function require -a name
-  # Skip if plugin has already been loaded.
-  contains -- $OMF_PATH/pkg/$name $fish_function_path;
-    or contains -- $OMF_CONFIG/pkg/$name $fish_function_path;
-    and return 0
+function require
+  for name in $argv
+    contains -- $name $OMF_IGNORE
+      and continue
 
-  for path in {$OMF_PATH,$OMF_CONFIG}/pkg/$name
-    test -d $path; or continue
+    contains -- $name $OMF_LOADED
+      and continue
 
-    if autoload $path $path/functions $path/completions
+    for path in {$OMF_PATH,$OMF_CONFIG}/pkg/$name
+      not test -d $path
+        and continue
+
+      test -d $path/functions
+        and autoload $path/completions $path/functions
+        or  autoload $path/completions $path
 
       if test -f $path/bundle
-        for line in (cat $path/bundle)
-          test (echo $line | cut -d' ' -f1) = package;
-            and set dependency (basename (echo $line | cut -d' ' -f2));
-              and require $dependency
+        read -z -l bundle < $path/bundle
+        for line in (echo $bundle)
+          set line (echo $line)
+          test $line[1] = package
+            and set dependency (basename $line[2])
+            and require $dependency
         end
       end
 
-      source $path/init.fish ^/dev/null;
-        or source $path/$name.fish ^/dev/null;
+      source $path/init.fish ^/dev/null
+        or source $path/$name.fish ^/dev/null
         and emit init_$name $path
+
+      set -g OMF_LOADED $OMF_LOADED $name
     end
   end
 
