@@ -1,41 +1,57 @@
-# SYNOPSIS
-#   require [name]
-#
-# OVERVIEW
-#   Require a plugin:
-#     - Autoload its functions and completions.
-#     - Require bundle dependencies.
-#     - Source its initialization file.
-#     - Emit its initialization event.
-#
-#   If the required plugin has already been loaded, does nothing.
+function require
+  set packages $argv
 
-function require -a name
-  # Skip if plugin has already been loaded.
-  contains -- $OMF_PATH/pkg/$name $fish_function_path;
-    or contains -- $OMF_CONFIG/pkg/$name $fish_function_path;
-    and return 0
-
-  for path in {$OMF_PATH,$OMF_CONFIG}/pkg/$name
-    test -d $path; or continue
-
-    if autoload $path $path/functions $path/completions
-
-      if test -f $path/bundle
-        for line in (cat $path/bundle)
-          test (echo $line | cut -d' ' -f1) = package;
-            and set dependency (basename (echo $line | cut -d' ' -f2));
-              and require $dependency
-        end
-      end
-
-      source $path/init.fish ^/dev/null;
-        or source $path/$name.fish ^/dev/null;
-        and emit init_$name $path
+  # Remove packages which have already been loaded.
+  for package in $packages
+    if contains -- $package $omf_packages_loaded
+      set index (contains -i -- $package $packages)
+      set -e packages[$index]
     end
   end
 
-  functions -e init  # Cleanup previously sourced function
+  eval "echo {$OMF_PATH,$OMF_CONFIG}/pkg*/$packages" | read -a package_path
+  set function_path $package_path/functions*
+  set completion_path $package_path/completions*
+  set init_path $package_path/init.fish*
+
+  # Autoload functions
+  test -n "$function_path"
+    and set fish_function_path $fish_function_path[1] \
+                               $function_path \
+                               $fish_function_path[2..-1]
+
+  # Autoload completions
+  test -n "$complete_path"
+    and set fish_complete_path $fish_complete_path[1] \
+                               $complete_path \
+                               $fish_complete_path[2..-1]
+
+  for init in $init_path
+    set -l IFS '/'
+    echo $init | read -la components
+
+    set package $components[-2]
+    set path (printf '/%s' $components[1..-2])
+    set bundle $path/bundle
+    set dependencies
+
+    if test -f $bundle
+      set -l IFS ' '
+      while read -l type dependency
+        test "$type" != package
+          and continue
+        require "$dependency"
+        set dependencies $dependencies $dependency
+      end < $bundle
+    end
+
+    test -e $init
+      and source $init $path
+
+    emit init_$package $path
+
+    set -g omf_packages_loaded $omf_packages_loaded $package
+  end
 
   return 0
 end
