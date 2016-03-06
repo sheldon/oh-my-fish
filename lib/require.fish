@@ -45,9 +45,7 @@ function require
       end < $bundle
     end
 
-    test -e $init
-      and source $init $path
-
+    source $init $path
     emit init_$package $path
 
     set -g omf_packages_loaded $omf_packages_loaded $package
