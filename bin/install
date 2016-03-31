@@ -86,8 +86,13 @@ function install_omf
   set git_uri (echo $OMF_REPO_URI | sed 's/\.git//').git
 
   report progress "Cloning $OMF_REPO_BRANCH from $git_uri..."
-  if not git clone -q --depth 1 -b $OMF_REPO_BRANCH $git_uri "$OMF_PATH"
+  if not git clone -q -b $OMF_REPO_BRANCH $git_uri "$OMF_PATH"
     report error "Error cloning repository!"
+  end
+
+  if set -l hash (git -C "$OMF_PATH" rev-list --quiet --tags --max-count=1 ^ /dev/null)
+    git -C "$OMF_PATH" checkout tags/(git -C "$OMF_PATH" describe --tags $hash)
+      or report error "Error getting latest version!"
   end
 
   set git_upstream (git --git-dir "$OMF_PATH/.git" --work-tree "$OMF_PATH" config remote.upstream.url)
@@ -122,6 +127,7 @@ function install_omf
     mkdir -p "$OMF_CONFIG"
   end
 
+  test -f "$OMF_CONFIG/channel"; or echo "stable" > "$OMF_CONFIG/channel"
   test -f "$OMF_CONFIG/bundle"; or echo "theme default" > "$OMF_CONFIG/bundle"
   test -f "$OMF_CONFIG/theme";  or echo "default" > "$OMF_CONFIG/theme"
 

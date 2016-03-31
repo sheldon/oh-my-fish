@@ -14,6 +14,25 @@ function omf.cli.help -a command
         omf cd l
       "
 
+    case "channel"
+      echo \n"\
+      Gets or changes the update channel.
+
+      Two channels are available by default: the "(omf::em)"stable"(omf::off)" channel provides stable
+      updates with the latest tagged version of Oh My Fish, and "(omf::em)"dev"(omf::off)" which provides
+      the latest changes under development. The update channel currently set
+      determines what version "(omf::em)"omf update"(omf::off)" will upgrade to.
+
+      "(omf::dim)"Usage:"(omf::off)"
+        omf channel         Print the currently selected update channel
+        omf channel "(omf::em)"<name>"(omf::off)"  Switch to the given update channel
+
+      "(omf::dim)"Examples:"(omf::off)"
+        omf channel
+        omf channel stable
+        omf channel dev
+      "
+
     case "d" "describe"
       echo \n"\
       Get information about what packages do.
@@ -143,6 +162,7 @@ function omf.cli.help -a command
         "(omf::em)"c"(omf::off)"d        Change directory to plugin/theme directory.
         "(omf::em)"n"(omf::off)"ew       Create a new package from a template.
         "(omf::em)"s"(omf::off)"ubmit    Submit a package to the registry.
+        "(omf::em)"channel"(omf::off)"   Gets or changes the update channel.
         "(omf::em)"destroy"(omf::off)"   Uninstall Oh My Fish.
         "(omf::em)"doctor"(omf::off)"    Troubleshoot Oh My Fish.
         "(omf::em)"help"(omf::off)"      Shows help about a specific action.
